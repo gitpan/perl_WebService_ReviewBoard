@@ -8,15 +8,16 @@ use Data::Dumper;
 use Log::Log4perl qw(:easy);
 use HTTP::Request::Common;
 use LWP::UserAgent;
-use version; our $VERSION = qv('0.1.0');
+use version; our $VERSION = qv('0.1.1');
 
 sub new {
 	my $proto = shift;
-	my $url   = shift
-	  or LOGDIE "usage: " . __PACKAGE__ . "->new( 'http://demo.review-board.org' );";
+	my $url   = shift || LOGDIE "usage: " . __PACKAGE__ . "->new( 'http://demo.review-board.org' );";
 
-	if ( !$url || $url !~ m#^http://# ) {
-		LOGDIE "url you specified ($url) looks invalid.  Must start with http://";
+	if ( $url !~ m#^https?://# ) {
+		WARN "url you specified ($url) looks invalid.  Must start with http://";
+        WARN "prefixing with http:// for you";
+        $url = "http://$url";
 	}
 
 	my $class = ref $proto || $proto;
@@ -79,7 +80,7 @@ sub api_call {
 
 	my $json;
 	if ( $response->is_success ) {
-		$json = JSON::Syck::Load( $response->content() );
+		$json = JSON::Syck::Load( $response->decoded_content() );
 	}
 	else {
 		LOGDIE "Error fetching $path: " . $response->status_line . "\n";
@@ -112,10 +113,6 @@ __END__
 =head1 NAME
 
 WebService::ReviewBoard - Perl library to talk to a review board installation thru web services.
-
-=head1 VERSION
-
-This document describes WebService::ReviewBoard version 0.1.0
 
 =head1 SYNOPSIS
 
